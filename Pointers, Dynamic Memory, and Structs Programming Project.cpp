@@ -1,131 +1,109 @@
 //This program simulates a grade book.
+//This program takes input from a text file with student names and tests scores. The file must be in a specific format where the names and scores are on separate lines.
+//Using the names and scores given, the program calculates the average between the scores and lists them for each respective student. It also gives a letter grade based on the average score.
 
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <string>
+
 using namespace std;
 
-int count1 = 0;
-int count2 = 0;
-int new_count1 = 0;
-double average = 0;
-int the_final_count = 0;
+const int num_tests = 5;
 
-int read();
-double averages();
-int letter();
-void report();
+int read(string[], int[][num_tests], ifstream&);
+void averages(int[][num_tests], double[], int);
+char letter(double);
+void report(string[], double[], int);
 
-string names[50];
-int scores[50][35];
-double averages_array[50];
-
-const int num_scores = read();
-
+//The only pre-conditons for this function are that certain header files are included, namespace std is being used, the constant int for the number of tests is 5, and the appropiate functions are prototyped.
+//The program should always end at this function by returning 0, and the rest of the functions should have already executed.
 int main()
 {
-    int average_count = 0;
+    string names[50];
+    int scores[50][num_tests];
+    double averages_array[50];
 
-    while (average_count < count1)
+    ifstream inputFile("StudentGrades.txt");
+
+    if (inputFile)
     {
-        averages_array[average_count] = averages();
-        average_count++;
+        cout << "Opening file..." << endl;
+    }
+    else
+    {
+        cout << "Error opening the file." << endl;
+
+        exit(0);
     }
 
-    report();
-    return 0;
-}
-
-int read()
-{
-    ifstream inputFile("C:\\Users\\jacob\\Downloads\\StudentGrades.txt");
-
-    int amount_scores = 0;
-    string yes_or_no = " ";
-
-    cout << "Do all students have the same amount of scores? Answer 'yes' or 'no' in all lowercase: ";
-    cin >> yes_or_no;
-
-    while (amount_scores == 0)
-    {
-        if (yes_or_no == "yes")
-        {
-            cout << endl << "How many scores does each student have? ";
-            cin >> amount_scores;
-        }
-        else if (yes_or_no == "no")
-        {
-            amount_scores = -1;
-            cout << endl;
-        }
-        else
-        {
-            cout << endl << "You did not enter a correct response! " << endl << endl;
-            cout << "Do all students have the same amount of scores? Answer 'yes' or 'no' in all lowercase: ";
-            cin >> yes_or_no;
-        }
-    }
-
-    while (count1 < 50 && inputFile >> names[count1])
-    {
-        count2 = 0;
-
-        if (yes_or_no == "no")
-        {
-            cout << "How many test scores does student " << count1 + 1 << " have? ";
-            cin >> amount_scores;
-        }
-
-        //Below is where it went wrong. Having amount_scores set to a number 
-        //like 50 causes it to read every line in the file, put it in the 
-        //scores array, and leave nothing for the names array. I tried using
-        //methods such as getline, a different kind of loop, etc. but nothing
-        //worked. amount_scores is currently set to a user inputted number.
-        while (count2 < amount_scores && inputFile >> scores[count1][count2])
-        {
-            count2++;
-        }
-
-        count1++;
-    }
+    int students = 0;
+    students = read(names, scores, inputFile);
 
     inputFile.close();
 
-    return count1 * count2;
+    averages(scores, averages_array, students);
+    report(names, averages_array, students);
+
+    return 0;
 }
 
-double averages()
+//This function has the text file statement and the name and score arrays passed to it so information can be read from the file and appropiately placed inside both the arrays.
+//The pre-conditions for this function are that the file has already been opened and the arrays defined.
+//The function ends by having placed info inside of the arrays and returning a count to main which is equal to the amount of students in the file.
+int read(string names[], int scores[][num_tests], ifstream& file)
 {
-    int new_count2 = 0;
-    int holder = 0;
-    double average = 0;
+    string name = " ";
+    int count = 0;
 
-    while (new_count1 < count1)
+    while (getline(file, name) && count < 50)
     {
-        while (new_count2 < count2)
+        names[count] = name;
+
+        for (int count2 = 0; count2 < num_tests; count2++)
         {
-            holder = scores[new_count1][new_count2];
-            average += holder;
-            new_count2++;
+            file >> scores[count][count2];
         }
 
-        average /= count2;
-        new_count1++;
-        return average;
+        file.ignore();
+        count++;
+    }
+
+    return count;
+}
+
+//This function takes as input the scores array and the amount of students so the scores for each student can be passed into the averages array (which is also taken as input).
+//The pre-conditions for this function are that the read function has already been executed and the file closed.
+//This function ends by having calculated all of the average test scores and having put all of the average test scores inside of the averages array.
+void averages(int scores[][num_tests], double averages_array[], int students)
+{
+    for (int count = 0; count < students; count++)
+    {
+        double total_score = 0;
+
+        for (int count2 = 0; count2 < num_tests; count2++)
+        {
+            total_score += scores[count][count2];
+        }
+
+        averages_array[count] = total_score / num_tests;
     }
 }
 
-int letter()
+//This function only takes as input the average for each student so a respective letter grade can be calculated.
+//The pre-condition for this function is that every other function has already been executed.
+//This function will execute for how many students there are, and it will end by returning a letter grade for each one.
+char letter(double average)
 {
     char grade = 0;
 
-    if (averages_array[the_final_count] < 60)
+    if (average < 60)
         grade = 'F';
-    else if (averages_array[the_final_count] < 70)
+    else if (average < 70)
         grade = 'D';
-    else if (averages_array[the_final_count] < 80)
+    else if (average < 80)
         grade = 'C';
-    else if (averages_array[the_final_count] < 90)
+    else if (average < 90)
         grade = 'B';
     else
         grade = 'A';
@@ -133,18 +111,19 @@ int letter()
     return grade;
 }
 
-void report()
+//This function takes as input the names and averages array as well as the amount of students so the information in the arrays can finally be displayed for each student.
+//The pre-condition for this function is that every other part of main has executed (except for the return statement).
+//This function ends by having displayed the names of the students, their averages, and their respective letter grade.
+void report(string names[], double averages_array[], int students)
 {
     cout << endl << "     " << "Name" << "     " << "Average Test Score" << "     " << "Letter Grade" << endl;
 
     char letter_grade = 0;
 
-    while (the_final_count < count1)
+    for (int count = 0; count < students; count++)
     {
-        letter_grade = letter();
-        cout << setw(10) << names[the_final_count] << setw(15) << averages_array[the_final_count] << setw(19) << letter_grade << endl;
-        the_final_count++;
+        letter_grade = letter(averages_array[count]);
+        cout << setw(10) << names[count] << setw(15) << averages_array[count] << setw(19) << letter_grade << endl;
     }
-
-    exit(0);
 }
+
